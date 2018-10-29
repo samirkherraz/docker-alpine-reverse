@@ -1,0 +1,71 @@
+#!/bin/sh
+
+COUNTER=0
+
+setVar(){
+
+    NAME="SITE_"$COUNTER"_"$1
+    DATA=$(eval 'echo $'$NAME)
+    if [ -z "$DATA" ];
+    then 
+        echo "\t\t> "$1"\t\t"$2"\t\t(Default)"
+        DATA=$2
+    else
+        echo "\t\t> "$1"\t\t"$DATA
+    fi
+    sed -i "s,<$1>,$DATA,g" $FILE
+}
+
+
+isSiteEnabled(){
+    NAME="SITE_"$COUNTER"_ENABLE"
+    ENABLE=$(eval 'echo $'$NAME)
+    if [ -z "$ENABLE" ];
+    then 
+        return 1
+    fi
+
+
+    NAME="SITE_"$COUNTER"_DOMAIN"
+    DOMAIN=$(eval 'echo $'$NAME)
+    if [ -z "$DOMAIN" ];
+    then 
+        DOMAIN="_"
+    fi
+    
+    FILE="/etc/nginx/conf.d/$DOMAIN.conf"
+
+    return 0
+}
+
+
+install(){
+    echo "> Install Template"
+    cp /etc/nginx/template/proxypass.conf $FILE
+      
+}
+
+next(){
+    echo "> Get Next Site"
+    COUNTER=$(($COUNTER + 1))
+}
+
+echo "============= START ==============="
+mkdir -p /var/www/certbot/
+chown nginx:nginx /var/www/certbot/ -R
+while [ 1 -eq 1 ];
+do    
+    if ! isSiteEnabled;
+    then
+        break
+    fi
+    install;
+    setVar "DOMAIN" "_"
+    setVar "DOMAIN_PATH" "/"
+    setVar "HOST" "localhost"
+    setVar "HOST_PATH" "/"
+    setVar "HOST_PROTO" "http"
+    setVar "HOST_PORT" "80"
+    next; 
+done
+echo "============= DONE ==============="
