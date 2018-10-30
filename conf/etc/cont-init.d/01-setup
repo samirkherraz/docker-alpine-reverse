@@ -58,7 +58,8 @@ certbot(){
     then
         sed -i "s,<CERTBOT>,,g" $FILE
     else
-        grep -v "<CERTBOT>" $FILE
+        grep -v "<CERTBOT>" $FILE > $FILE.temp
+        mv $FILE.temp $FILE
     fi
     
 }
