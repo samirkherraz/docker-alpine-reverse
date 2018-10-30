@@ -1,0 +1,59 @@
+#!/usr/bin/with-contenv sh
+
+COUNTER=0
+
+
+isSiteEnabled(){
+    NAME="SITE_"$COUNTER"_ENABLE"
+    ENABLE=$(eval 'echo $'$NAME)
+    if [ -z "$ENABLE" ];
+    then 
+        return 1
+    fi
+
+
+    NAME="SITE_"$COUNTER"_DOMAIN"
+    DOMAIN=$(eval 'echo $'$NAME)
+    if [ -z "$DOMAIN" ];
+    then 
+        DOMAIN="_"
+    fi
+    
+    NAME="SITE_"$COUNTER"_CERTBOT"
+    CERTBOT=$(eval 'echo $'$NAME)
+    if [ -z "$CERTBOT" ];
+    then 
+        CERTBOT="NO"
+    fi
+    FILE="/etc/nginx/conf.d/$DOMAIN.conf"
+
+    return 0
+}
+
+
+
+
+certbot(){
+    echo "> Install Certbot"
+    if [ "x$CERTBOT" = "xYES" ];
+    then
+        certbot-auto --nginx -d $DOMAIN
+    fi    
+}
+
+next(){
+    echo "> Get Next Site"
+    COUNTER=$(($COUNTER + 1))
+}
+
+echo "============= START ==============="
+while [ 1 -eq 1 ];
+do    
+    if ! isSiteEnabled;
+    then
+        break
+    fi
+    certbot;
+    next; 
+done
+echo "============= DONE ==============="

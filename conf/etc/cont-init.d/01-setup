@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/with-contenv sh
 
 COUNTER=0
 
@@ -33,6 +33,12 @@ isSiteEnabled(){
         DOMAIN="_"
     fi
     
+    NAME="SITE_"$COUNTER"_CERTBOT"
+    CERTBOT=$(eval 'echo $'$NAME)
+    if [ -z "$CERTBOT" ];
+    then 
+        CERTBOT="NO"
+    fi
     FILE="/etc/nginx/conf.d/$DOMAIN.conf"
 
     return 0
@@ -43,6 +49,18 @@ install(){
     echo "> Install Template"
     cp /etc/nginx/template/proxypass.conf $FILE
       
+}
+
+
+certbot(){
+    echo "> Install Certbot"
+    if [ "x$CERTBOT" = "xYES" ];
+    then
+        sed -i "s,<CERTBOT>,,g" $FILE
+    else
+        grep -v "<CERTBOT>" $FILE
+    fi
+    
 }
 
 next(){
@@ -66,6 +84,7 @@ do
     setVar "HOST_PATH" "/"
     setVar "HOST_PROTO" "http"
     setVar "HOST_PORT" "80"
+    certbot;
     next; 
 done
 echo "============= DONE ==============="
