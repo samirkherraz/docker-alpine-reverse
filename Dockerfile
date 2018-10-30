@@ -14,5 +14,4 @@ RUN set -x \
 ADD conf/ /
 RUN set -x \
     && chmod +x /etc/cont-init.d/* \
-    && chmod +x /etc/s6/services/*/* \
-    && chmod +x /etc/cron.weekly/* 
+    && chmod +x /etc/s6/services/*/*
