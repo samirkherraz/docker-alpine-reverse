@@ -7,10 +7,6 @@ RUN set -x \
     && chown nginx:nginx /var/www/ /run/nginx/
 
 
-RUN set -x \
-    && wget https://dl.eff.org/certbot-auto -O /usr/sbin/certbot-auto \
-    && chmod +x /usr/sbin/certbot-auto
-
 ADD conf/ /
 RUN set -x \
     && chmod +x /etc/cont-init.d/* \

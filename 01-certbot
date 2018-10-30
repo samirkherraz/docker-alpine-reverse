@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv sh
+#!/bin/sh
 
 COUNTER=0
 
@@ -35,9 +35,10 @@ isSiteEnabled(){
 
 certbot(){
     echo "> Install Certbot"
-    if [ "x$CERTBOT" = "xYES" ];
+    if [ "x$CERTBOT" == "xYES" ];
     then
-        certbot-auto --nginx -d $DOMAIN
+        certbot certonly --standalone --email mail@domain.tld -d $DOMAIN
+        certbot --nginx -d $DOMAIN
     fi    
 }
 
