@@ -56,12 +56,12 @@ certbot(){
     echo "> Install Certbot"
     if [ "x$CERTBOT" = "xYES" ];
     then
-        sed -i "s,<CERTBOT>,,g" $FILE
-        echo "# $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
-        echo "echo 2 | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email ${CERTBOT_EMAIL} -d $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
-        echo "echo 2 | certbot --nginx -d $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
+        sed -i "s,#CERTBOT,,g" $FILE
+        mkdir /var/www/certbot/$DOMAIN
+        echo "# $DOMAIN\n\n" >> /etc/periodic/weekly/01-certbot.sh
+        echo "echo -e 'A\nY\n' | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email ${CERTBOT_EMAIL} -d $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
     else
-        grep -v "<CERTBOT>" $FILE > $FILE.temp
+        grep -v "#CERTBOT" $FILE > $FILE.temp
         mv $FILE.temp $FILE
     fi
     
