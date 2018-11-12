@@ -6,6 +6,9 @@ RUN set -x \
     && rm -R /var/www/*  \
     && chown nginx:nginx /var/www/ /run/nginx/
 
+RUN set -x \
+    && apk --no-cache --virtual add certbot \
+    && mkdir /var/www/certbot/
 
 ADD conf/ /
 RUN set -x \

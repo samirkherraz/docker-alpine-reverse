@@ -57,6 +57,9 @@ certbot(){
     if [ "x$CERTBOT" = "xYES" ];
     then
         sed -i "s,<CERTBOT>,,g" $FILE
+        echo "# $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
+        echo "echo 2 | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email ${CERTBOT_EMAIL} -d $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
+        echo "echo 2 | certbot --nginx -d $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
     else
         grep -v "<CERTBOT>" $FILE > $FILE.temp
         mv $FILE.temp $FILE
@@ -70,7 +73,9 @@ next(){
 }
 
 echo "============= START ==============="
-mkdir -p /var/www/certbot/
+rm /etc/nginx/conf.d/* 
+echo "#!/usr/bin/with-contenv sh" > /etc/periodic/weekly/01-certbot.sh
+chmod +x /etc/periodic/weekly/01-certbot.sh
 chown nginx:nginx /var/www/certbot/ -R
 while [ 1 -eq 1 ];
 do    
