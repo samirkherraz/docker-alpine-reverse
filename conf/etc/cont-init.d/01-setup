@@ -61,13 +61,13 @@ do_certbot(){
     then
         mv $FILE $TEMPFILE
         grep -v "#CERTBOT" $TEMPFILE > $FILE
+        mkdir /var/www/certbot/$DOMAIN -p
         do_restart_nginx;
         if  [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]
         then
             echo "2" | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
             RET=$?
         else
-            mkdir /var/www/certbot/$DOMAIN -p
             chown nginx:nginx /var/www/certbot/$DOMAIN -R
             if [ -f /etc/letsencrypt/firsttime ]
             then 
