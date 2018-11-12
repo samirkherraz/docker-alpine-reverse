@@ -2,22 +2,25 @@
 
 COUNTER=0
 
-setVar(){
+set_var(){
 
     NAME="SITE_"$COUNTER"_"$1
     DATA=$(eval 'echo $'$NAME)
     if [ -z "$DATA" ];
     then 
-        echo "\t\t> "$1"\t\t"$2"\t\t(Default)"
+        echo "    > "$1"    "$2"    (Default)"
         DATA=$2
     else
-        echo "\t\t> "$1"\t\t"$DATA
+        echo "    > "$1"    "$DATA
     fi
     sed -i "s,<$1>,$DATA,g" $FILE
 }
 
+do_restart_nginx(){
+	killall -9 nginx
+}
 
-isSiteEnabled(){
+is_site_enabled(){
     NAME="SITE_"$COUNTER"_ENABLE"
     ENABLE=$(eval 'echo $'$NAME)
     if [ -z "$ENABLE" ];
@@ -40,31 +43,52 @@ isSiteEnabled(){
         CERTBOT="NO"
     fi
     FILE="/etc/nginx/conf.d/$DOMAIN.conf"
+    TEMPFILE="/tmp/$DOMAIN.conf"
 
     return 0
 }
 
 
-install(){
-    echo "> Install Template"
-    cp /etc/nginx/template/proxypass.conf $FILE
-      
+do_install(){
+    echo "> do_install Template"
+    cp /etc/nginx/template/proxypass.conf $FILE      
 }
 
 
-certbot(){
-    echo "> Install Certbot"
-    if [ "x$CERTBOT" = "xYES" ];
+do_certbot(){
+    echo "> do_install Certbot"
+    if [  "$CERTBOT" == "YES" ]
     then
-        sed -i "s,#CERTBOT,,g" $FILE
-        mkdir /var/www/certbot/$DOMAIN
-        echo "# $DOMAIN\n\n" >> /etc/periodic/weekly/01-certbot.sh
-        echo "echo -e 'A\nY\n' | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email ${CERTBOT_EMAIL} -d $DOMAIN" >> /etc/periodic/weekly/01-certbot.sh
+        mv $FILE $TEMPFILE
+        grep -v "#CERTBOT" $TEMPFILE > $FILE
+        do_restart_nginx;
+        if  [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]
+        then
+            echo "2" | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
+            RET=$?
+        else
+            mkdir /var/www/certbot/$DOMAIN -p
+            chown nginx:nginx /var/www/certbot/$DOMAIN -R
+            if [ -f /etc/letsencrypt/firsttime ]
+            then 
+                echo "2" | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
+            	RET=$?
+            else
+                echo -e 'A\nY\n' | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
+            	RET=$?
+                echo "1" > /etc/letsencrypt/firsttime
+            fi
+        fi
+
+	if [ "$RET" == "0" ]
+	then 
+		mv $TEMPFILE $FILE
+		do_restart_nginx;
+	fi
     else
-        grep -v "#CERTBOT" $FILE > $FILE.temp
+        grep -v "#CERTBOT" $FILE > $TEMPFILE
         mv $FILE.temp $FILE
     fi
-    
 }
 
 next(){
@@ -73,24 +97,30 @@ next(){
 }
 
 echo "============= START ==============="
-rm /etc/nginx/conf.d/* 
-echo "#!/usr/bin/with-contenv sh" > /etc/periodic/weekly/01-certbot.sh
-chmod +x /etc/periodic/weekly/01-certbot.sh
+
 chown nginx:nginx /var/www/certbot/ -R
 while [ 1 -eq 1 ];
 do    
-    if ! isSiteEnabled;
+    if ! is_site_enabled;
     then
         break
     fi
-    install;
-    setVar "DOMAIN" "_"
-    setVar "DOMAIN_PATH" "/"
-    setVar "HOST" "localhost"
-    setVar "HOST_PATH" "/"
-    setVar "HOST_PROTO" "http"
-    setVar "HOST_PORT" "80"
-    certbot;
+    echo $FILE
+    if [ -f "$FILE" ]
+    then
+ 	    echo "$FILE found."
+    else
+	    echo "file not found"
+        do_install;
+        set_var "DOMAIN" "_"
+        set_var "DOMAIN_PATH" "/"
+        set_var "HOST" "localhost"
+        set_var "HOST_PATH" "/"
+        set_var "HOST_PROTO" "http"
+        set_var "HOST_PORT" "80"
+    fi
+    do_certbot;
     next; 
 done
 echo "============= DONE ==============="
+killall -9 nginx
