@@ -59,16 +59,23 @@ do_certbot(){
     echo "> do_install Certbot"
     if [  "$CERTBOT" == "YES" ]
     then
-        mv $FILE $TEMPFILE
-        grep -v "#CERTBOT" $TEMPFILE > $FILE
-        mkdir /var/www/certbot/$DOMAIN -p
-        do_restart_nginx;
+        mkdir /var/www/certbot/$DOMAIN -p    
         if  [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]
         then
-            echo "2" | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
-            RET=$?
+            now=$( date +%s )
+            days_ago=$(( $now - 604800 ))
+            file_time=$(date -r "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" +%s)
+            if [ $file_time -le $days_ago ]
+            then
+                echo "2" | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
+            fi
         else
+
+            mv $FILE $TEMPFILE
+            grep -v "#CERTBOT" $TEMPFILE > $FILE
+            do_restart_nginx;
             chown nginx:nginx /var/www/certbot/$DOMAIN -R
+
             if [ -f /etc/letsencrypt/firsttime ]
             then 
                 echo "2" | certbot certonly --webroot -w /var/www/certbot/$DOMAIN --email $CERTBOT_EMAIL -d $DOMAIN
@@ -78,14 +85,14 @@ do_certbot(){
             	RET=$?
                 echo "1" > /etc/letsencrypt/firsttime
             fi
-        fi
 
-	if [ "$RET" == "0" ]
-	then 
-		mv $TEMPFILE $FILE
-		do_restart_nginx;
-	fi
-    else
+            if [ "$RET" == "0" ]
+	        then 
+		        mv $TEMPFILE $FILE
+		        do_restart_nginx;
+        	fi    
+        fi
+	else
         grep -v "#CERTBOT" $FILE > $TEMPFILE
         mv $FILE.temp $FILE
     fi
