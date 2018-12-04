@@ -57,7 +57,7 @@ do_install(){
 
 do_certbot(){
     echo "> do_install Certbot"
-    if [  "$CERTBOT" == "YES" ]
+    if [ "$CERTBOT" == "YES" ];
     then
         mkdir /var/www/certbot/$DOMAIN -p    
         if  [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]
@@ -94,7 +94,7 @@ do_certbot(){
         fi
 	else
         grep -v "#CERTBOT" $FILE > $TEMPFILE
-        mv $FILE.temp $FILE
+        mv $TEMPFILE $FILE
     fi
 }
 
