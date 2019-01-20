@@ -122,7 +122,7 @@ do
         set_var "DOMAIN" "_"
         set_var "DOMAIN_PATH" "/"
         set_var "HOST" "localhost"
-        set_var "HOST_PATH" "/"
+        set_var "HOST_PATH" ""
         set_var "HOST_PROTO" "http"
         set_var "HOST_PORT" "80"
     fi
